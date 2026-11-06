@@ -14,5 +14,10 @@ service SupplierService {
   };
   entity SupplierContacts       as projection on db.SupplierContacts;
   entity SupplierCertifications as projection on db.SupplierCertifications;
+
+  // ---- US-09: quotations (totals and numbers are calculated in supplier-service.js) ----
+  entity SupplierQuotations     as projection on db.SupplierQuotations;
+  entity SupplierQuotationItems as projection on db.SupplierQuotationItems;
+
   @readonly entity Materials    as projection on db.Materials;
 }

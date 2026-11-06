@@ -13,3 +13,11 @@ annotate S.SupplierCertifications with @restrict: [
   { grant: 'READ', to: ['ProcurementOfficer', 'Manager', 'Administrator'] },
   { grant: ['CREATE', 'UPDATE', 'DELETE'], to: 'ProcurementOfficer' }
 ];
+annotate S.SupplierQuotations with @restrict: [
+  { grant: 'READ', to: ['ProcurementOfficer', 'Manager', 'Administrator'] },
+  { grant: ['CREATE', 'UPDATE', 'DELETE'], to: 'ProcurementOfficer' }
+];
+annotate S.SupplierQuotationItems with @restrict: [
+  { grant: 'READ', to: ['ProcurementOfficer', 'Manager', 'Administrator'] },
+  { grant: ['CREATE', 'UPDATE', 'DELETE'], to: 'ProcurementOfficer' }
+];

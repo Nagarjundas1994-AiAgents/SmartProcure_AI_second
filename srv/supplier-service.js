@@ -41,7 +41,6 @@ export default class ProcurementService extends cds.ApplicationService {
       if (issuedOn && expiresOn && expiresOn < issuedOn) return req.reject(400, 'A certificate cannot expire before it was issued')
     })
 
-        this.after('CREATE', PurchaseRequests, (_, req) => audit(req, 'CREATE', 'PurchaseRequest', req.data.requestNo, `total ${req.data.totalAmount}`))
         return super.init()
     }
 }

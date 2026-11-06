@@ -51,6 +51,7 @@ export default class SupplierService extends cds.ApplicationService {
       if (issuedOn && expiresOn && expiresOn < issuedOn) return req.reject(400, 'A certificate cannot expire before it was issued')
     })
 
+        return super.init()
         // ---------- US-09: quotations (totals are always calculated on the server) ----------
     this.before(['CREATE', 'UPDATE'], SupplierQuotations, async req => {
       const q = req.data

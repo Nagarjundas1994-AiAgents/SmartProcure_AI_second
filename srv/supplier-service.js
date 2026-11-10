@@ -138,6 +138,39 @@ export default class SupplierService extends cds.ApplicationService {
         .columns('supplier.supplierNo as supplierNo', 'supplier.name as supplier', 'certType', 'expiresOn').where({ expiresOn: { '<=': limit } }).orderBy('expiresOn')
       return rows.map(r => ({ ...r, daysLeft: daysBetween(today(), r.expiresOn) }))
     })
+
+        // ---------- US-10: monthly performance from orders and receipts ----------
+    this.on('computePerformance', async req => {
+      const period = req.data.period
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(period ?? '')) return req.reject(400, 'period must look like 2026-09')
+      const suppliers = await SELECT.from(db.Suppliers).columns('ID')
+      let written = 0
+      for (const s of suppliers) {
+        const orders = (await SELECT.from(db.PurchaseOrders).where({ supplier_ID: s.ID })).filter(o => o.promisedDate?.startsWith(period))
+        if (!orders.length) continue
+        let onTime = 0, days = [], finished = 0
+        for (const o of orders) {
+          const last = (await SELECT.from(db.GoodsReceipts).where({ order_ID: o.ID }).orderBy('receivedOn desc'))[0]
+          if (o.status === 'DELIVERED' && last) { finished++; days.push(daysBetween(o.orderDate, last.receivedOn)); if (last.receivedOn <= o.promisedDate) onTime++ }
+        }
+        const onTimeRate = round2(100 * onTime / orders.length)
+        const prev = await latestPerformance(s.ID)
+        const quality = Number(prev?.qualityScore ?? 80)         // ponytail: no inspection data in the model; carries the last known quality score
+        const row = { supplier_ID: s.ID, period, onTimeRate, qualityScore: quality,
+                      avgDeliveryDays: days.length ? round2(days.reduce((a, b) => a + b, 0) / days.length) : 0,
+                      overallScore: round2(0.5 * onTimeRate + 0.5 * quality) }
+        const old = await SELECT.one.from(db.SupplierPerformance).where({ supplier_ID: s.ID, period })
+        if (old) await UPDATE(db.SupplierPerformance, old.ID).with(row); else await INSERT.into(db.SupplierPerformance).entries(row)
+        written++
+      }
+      await audit(req, 'COMPUTE_PERFORMANCE', 'SupplierPerformance', period, `${written} suppliers`)
+      return written
+    })
+
+    // ---------- US-11: integrations ----------
+    this.on('syncFromPortal', req => syncFromPortal(req))
+    this.on('importQuotationsCsv', req => importQuotationsCsv(req))
+
     return super.init()
   }
 }

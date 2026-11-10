@@ -110,7 +110,8 @@
       "SupplierPortal": {
         "kind": "rest",
         "credentials": {
-          "url": "http://localhost:4010"
+          "url": "http://localhost:4010",
+          "[production]": { "credentials": { "destination": "SUPPLIER_PORTAL" } }
         },
         "[production]": {
           "credentials": {
